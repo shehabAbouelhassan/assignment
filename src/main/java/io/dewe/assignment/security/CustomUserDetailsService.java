@@ -1,0 +1,39 @@
+package io.dewe.assignment.security;
+
+
+import io.dewe.assignment.model.User;
+import io.dewe.assignment.service.IUserService;
+import io.dewe.assignment.util.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    @Autowired
+        private IUserService userService;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        User user = userService.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+
+        Set<GrantedAuthority> authorities = Collections.singleton((SecurityUtils.convertToAuthority(user.getRole().name())));
+
+        return UserPrincipal.builder().user(user).id(user.getId())
+                .username(username).password(user.getPassword())
+                .authorities(authorities)
+                .build();
+
+    }
+}
